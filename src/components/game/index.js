@@ -14,7 +14,7 @@ export default class Game extends React.Component {
       physics: {
         default: "arcade",
         arcade: {
-          debug: true, //, set debug to true if you want collision boxes to be drawn
+          debug: false, //, set debug to true if you want collision boxes to be drawn
           gravity: {
             y: 1000,
           },

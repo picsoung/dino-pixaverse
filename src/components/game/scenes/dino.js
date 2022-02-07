@@ -9,15 +9,18 @@ import atlasImg from "../assets/img/atlas.png";
 import atlasJson from "../assets/json/atlas.json";
 import axeImg from "../assets/img/axe.png";
 
+import { watchStore } from '../../../utils/watchStore';
+
 const path = require("path");
 
 import { showScore, resetScore } from "../ui/score";
 import { hidePressToPlay, hideGameOver } from "../ui/gameState";
 
-import store, { UPDATE_SCORE } from "../../../store";
+import store, { UPDATE_SCORE, GAME_OVER } from "../../../store";
+import { connect, useSelector } from "react-redux";
 
 class Dino extends Phaser.Scene {
-  constructor() {
+  constructor(avatar) {
     // console.log("constructor");
     super("Dino");
     this.state = {
@@ -34,12 +37,13 @@ class Dino extends Phaser.Scene {
       },
       score: 0,
       highScore: 0,
+      avatar,
+      store
     };
   }
 
   preload() {
     // console.log("preload");
-    // This is where we can preload our assets
     this.load.spritesheet("tiles", tilesImg, {
       frameWidth: 16,
       frameHeight: 16,
@@ -49,18 +53,28 @@ class Dino extends Phaser.Scene {
     this.load.on("complete", () => {
       generateAnimations(this);
     });
+
+    const storeMonitor = [
+      { objectPath: 'avatar', onChange: this.updateAvatar }
+    ];
+    watchStore(store, storeMonitor);
   }
 
   create() {
     console.log("create");
     // This is where we will create our game objects
-    this.player = new Player(
-      this,
-      25,
-      460,
-      true,
-      "https://lh3.googleusercontent.com/Q4uXff5hD6T91FlaDiqZTpMu-kEgwx6IcUHXsWF_Moq5u6VOvfqKuIXN2_StL78LNiA1YW3e16vnrLq_zqvfOMtK7PLy9AcKGxWr=w600"
-    );
+    console.log('avatar',this.avatar)
+    if (this.avatar) {
+      this.player = new Player(
+        this,
+        25,
+        460,
+        true,
+        "https://lh3.googleusercontent.com/Q4uXff5hD6T91FlaDiqZTpMu-kEgwx6IcUHXsWF_Moq5u6VOvfqKuIXN2_StL78LNiA1YW3e16vnrLq_zqvfOMtK7PLy9AcKGxWr=w600"
+      );
+    } else {
+      this.player = new Player(this, 25, 460);
+    }
     this.inputs = this.input.keyboard.createCursorKeys();
     for (let index = 0; index < this.state.numberOfStars; index++) {
       new Star(this);
@@ -68,7 +82,6 @@ class Dino extends Phaser.Scene {
   }
 
   update(time, delta) {
-    // console.log("update");
     this.state.timer.cactusSpawnLoop += delta;
     this.state.timer.speedLoop += delta;
 
@@ -110,6 +123,22 @@ class Dino extends Phaser.Scene {
     if (this.inputs.space.isDown && this.state.gameOver) {
       this.restartGame();
     }
+
+    // console.log())
+    var state = store.getState()
+
+    if(state.avatar != this.state.avatar){  
+      console.log('change of avarar', state.avatar)
+      this.state.avatar = state.avatar
+      this.player.delete();
+      this.player = new Player(
+        this,
+        25,
+        460,
+        false,
+        state.avatar
+      );
+    }
   }
 
   updateUI() {
@@ -126,10 +155,13 @@ class Dino extends Phaser.Scene {
 
     //reset score
     this.state.score = 0;
-    store.dispatch({type: UPDATE_SCORE, score: this.state.score})
+    store.dispatch({ type: UPDATE_SCORE, score: this.state.score });
 
     this.state.started = true;
     this.state.gameOver = false;
+
+    store.dispatch({type: GAME_OVER, gameOver: this.state.gameOver});
+
     this.state.speed = 1;
     this.state.cactuses.forEach((cactus) => cactus.sprite.destroy());
     this.state.cactuses = [];
@@ -138,7 +170,16 @@ class Dino extends Phaser.Scene {
   }
 
   loadAvatar(url) {
-    let avatar = new Avatar(this, url);
+    // let avatar = new Avatar(this, url);
+    this.player = new Player(this, 25, 460, false, url);
+  }
+  updateAvatar(newVal, oldVal, objectPath){
+    console.log('updateAvatar', newVal, oldVal, objectPath)
+    // console.log(this.state)
+    // console.log(this.scene)
+    console.log(this.player)
+    this.player.delete();
+    this.player = new Player(this.scene, 25, 460, newVal);
   }
 }
 

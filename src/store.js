@@ -4,14 +4,15 @@ import { createLogger } from "redux-logger";
 import axios from "axios";
 import regeneratorRuntime from "regenerator-runtime";
 
-const initState = { players: [], score: 0, highScore: 0, gameOver: false };
+const initState = { player: {}, score: 0, highScore: 0, gameOver: false, gamesPlayed:0, allTimeHigh:0 };
 
 //ACTION TYPES
 const GET_PLAYERS = "GET_PLAYERS";
 const ADD_PLAYER = "ADD_PLAYER";
 export const UPDATE_SCORE = "UPDATE_SCORE";
-const GAME_OVER = "GAME_OVER";
+export const GAME_OVER = "GAME_OVER";
 export const UPDATE_HIGHSCORE = "UPDATE_HIGHSCORE";
+export const UPDATE_AVATAR = "UPDATE_AVATAR"
 
 //ACTION CREATORS
 const receivedPlayers = (players) => ({
@@ -24,18 +25,26 @@ const playerAdded = (player) => ({
   player,
 });
 
+export const updateAvatar = (avatar) => {
+    return {
+      type: UPDTATE_AVATAR,
+      avatar,
+    };
+  };
+
 export const updateScore = (score) => {
   return {
     type: UPDATE_SCORE,
     score,
   };
 };
+
 export const updateHighScore = (highScore) => {
-    return {
-      type: UPDATE_HIGHSCORE,
-      highScore,
-    };
+  return {
+    type: UPDATE_HIGHSCORE,
+    highScore,
   };
+};
 
 export const gameIsOver = () => ({
   type: GAME_OVER,
@@ -77,6 +86,8 @@ const reducer = (state = initState, action) => {
       return { ...state, highScore: action.highScore };
     case GAME_OVER:
       return { ...state, gameOver: true };
+    case UPDATE_AVATAR:
+      return { ...state, avatar: action.avatar };
     default:
       return state;
   }
